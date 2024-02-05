@@ -50,7 +50,6 @@ client.on("ready", async () => {
 
   setInterval(() => {
     fetchFlights((currentFlights) => {
-      currentFlights = [];
       let embeds = [];
 
       embeds[0] = new EmbedBuilder()
