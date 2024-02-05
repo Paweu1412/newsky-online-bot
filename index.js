@@ -25,44 +25,62 @@ const fetchFlights = async (callback) => {
   }
 }
 
+let messageToEdit = null;
+
 client.on("ready", async () => {
   const channel = client.channels.cache.get(CHANNEL_ID);
 
-  if (channel) {
-    channel.messages.fetch().then((messages) => {
-      messages.forEach((message) => {
-        message.delete();
-      });
+  if (!channel) { console.error('Channel not found'); return; }
+
+  channel.messages.fetch().then((messages) => {
+    messages.forEach((message) => {
+      message.delete();
     });
-  }
+  });
 
   const getInFlightTime = (depTime) => {
     const depTimeAct = new Date(depTime);
     const currentTime = new Date();
     const diffInMinutes = Math.round((currentTime - depTimeAct) / (1000 * 60));
-    return diffInMinutes;
+    const hours = Math.floor(diffInMinutes / 60);
+    const minutes = diffInMinutes % 60;
+
+    return `${hours}h ${minutes}min`;
   }
 
-  fetchFlights((currentFlights) => {
-    let embeds = [];
+  setInterval(() => {
+    fetchFlights((currentFlights) => {
+      currentFlights = [];
+      let embeds = [];
 
-    embeds[0] = new EmbedBuilder()
-      .setTitle("✈️ Ongoing PAFFSair flights")
-      .setColor("#00AA00")
-    
-    embeds[1] = new EmbedBuilder()
-      .setColor("#FFFFFF")
+      embeds[0] = new EmbedBuilder()
+        .setTitle("✈️ Ongoing PAFFSair flights")
+        .setColor("#00AA00")
+      
+      embeds[1] = new EmbedBuilder()
+        .setColor("#FFFFFF")
+        .setFooter({ text: `Last updated: ${new Date().toLocaleString()}` });
 
-    currentFlights.forEach((flight) => {
-      embeds[1].addFields(
-        { name: `${flight.airline.icao}${flight.flightNumber} - ${flight.pilot.fullname.split(' ')[0]}`, value: `**Dep**: ${flight.dep.icao} | **Arr**: ${flight.arr.icao} | **In flight**: ${getInFlightTime(flight.depTimeAct)}min | **Aircraft**: ${flight.aircraft.airframe.icao} | **Network**: ${flight.network.name === 'vatsim' ? 'VATSIM' : '-'}` },
-        { name: '\n', value: '\n' },
-      );
+      if (currentFlights.length === 0) {
+        embeds[1].setDescription("No flights at the moment 😔");
+      } else {
+        currentFlights.forEach((flight) => {
+          embeds[1].addFields(
+            { name: `${flight.airline.icao}${flight.flightNumber} - ${flight.pilot.fullname.split(' ')[0]}`, value: `**Dep**: ${flight.dep.icao} | **Arr**: ${flight.arr.icao} | **In flight**: ${getInFlightTime(flight.depTimeAct)} | **Aircraft**: ${flight.aircraft.airframe.icao} | **Network**: ${flight.network.name === 'vatsim' ? 'VATSIM' : '-'}` },
+            { name: '\n', value: '\n' },
+          );
+        });
+      }
+
+      if (messageToEdit) {
+        messageToEdit.edit({ embeds: embeds });
+      } else {
+        channel.send({ embeds: embeds }).then(sentMessage => {
+          messageToEdit = sentMessage;
+        });
+      }
     });
-    
-
-    channel.send({ embeds: embeds });
-  });
+  }, 180000); // 3 minutes
 });
 
 client.login(BOT_TOKEN);
