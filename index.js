@@ -36,23 +36,27 @@ client.on("ready", async () => {
     });
   }
 
-  fetchFlights((currentFlights) => {
-    console.log(currentFlights)
+  const getInFlightTime = (depTime) => {
+    const depTimeAct = new Date(depTime);
+    const currentTime = new Date();
+    const diffInMinutes = Math.round((currentTime - depTimeAct) / (1000 * 60));
+    return diffInMinutes;
+  }
 
+  fetchFlights((currentFlights) => {
     let embeds = [];
 
     embeds[0] = new EmbedBuilder()
-      .setTitle("Ongoing PAFFSair flights")
+      .setTitle("✈️ Ongoing PAFFSair flights")
       .setColor("#00AA00")
-    
     
     embeds[1] = new EmbedBuilder()
       .setColor("#FFFFFF")
 
-      
     currentFlights.forEach((flight) => {
       embeds[1].addFields(
-        { name: `${flight.airline.icao}${flight.flightNumber} - ${flight.pilot.fullname.split(' ')[0]}`, value: `**Dep**: ${flight.dep.icao} | **Arr**: ${flight.arr.icao} | **In flight**: ${flight.}` }
+        { name: `${flight.airline.icao}${flight.flightNumber} - ${flight.pilot.fullname.split(' ')[0]}`, value: `**Dep**: ${flight.dep.icao} | **Arr**: ${flight.arr.icao} | **In flight**: ${getInFlightTime(flight.depTimeAct)}min | **Aircraft**: ${flight.aircraft.airframe.icao} | **Network**: ${flight.network.name === 'vatsim' ? 'VATSIM' : '-'}` },
+        { name: '\n', value: '\n' },
       );
     });
     
