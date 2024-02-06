@@ -39,6 +39,10 @@ client.on("ready", async () => {
   });
 
   const getInFlightTime = (depTime) => {
+    if (depTime === null) {
+      return "0h 0min";
+    }
+
     const depTimeAct = new Date(depTime);
     const currentTime = new Date();
     const diffInMinutes = Math.round((currentTime - depTimeAct) / (1000 * 60));
@@ -79,7 +83,7 @@ client.on("ready", async () => {
         });
       }
     });
-  }, 180000); // 3 minutes
+  }, 60000); // 1 minute
 });
 
 client.login(BOT_TOKEN);
