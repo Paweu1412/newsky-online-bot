@@ -57,7 +57,7 @@ client.on("ready", async () => {
       let embeds = [];
 
       embeds[0] = new EmbedBuilder()
-        .setTitle("✈️ Ongoing PAFFSair flights")
+        .setTitle("✈️ Ongoing virtual flights")
         .setColor("#00AA00")
       
       embeds[1] = new EmbedBuilder()
