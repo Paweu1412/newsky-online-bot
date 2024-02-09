@@ -139,10 +139,10 @@ client.on("ready", async () => {
           .addFields(
             { name: "Total flights", value: recentFlights.length.toString(), inline: true },
             { name: "Total duration", value: `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}min`, inline: true },
-            { name: "Total passangers", value: totalPassangers.toString(), inline: true },
+            { name: "Total passengers", value: totalPassangers.toString(), inline: true },
             { name: "VATSIM flights", value: vatsimFlights.toString(), inline: true },
             { name: "Total distance", value: `${totalDistance}nm`, inline: true },
-            { name: "Average rating", value: averageRating.toString(), inline: true },
+            { name: "Average rating", value: averageRating.toFixed(2).toString(), inline: true },
           )
 
         peaksChannel.send({ embeds: [embed] });
