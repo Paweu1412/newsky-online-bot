@@ -3,8 +3,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 var BOT_TOKEN = process.env.BOT_TOKEN;
-var CHANNEL_ID = process.env.CHANNEL_ID;
 var NEWSKY_API_TOKEN = process.env.NEWSKY_API_TOKEN;
+
+var CHANNEL_ID_ONLINE = process.env.CHANNEL_ID_ONLINE;
+
+var CHANNEL_ID_PEAKS = process.env.CHANNEL_ID_PEAKS;
 
 const client = new Client({
   intents: [ GatewayIntentBits.Guilds ]
@@ -25,14 +28,33 @@ const fetchFlights = async (callback) => {
   }
 }
 
+const fetchRecentFlights = async (callback) => {
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+
+  const response = await fetch("https://newsky.app/api/airline-api/flights/recent", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${NEWSKY_API_TOKEN}`
+    },
+    body: JSON.stringify({ start: todayDate.toISOString() }),
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    callback(data.totalResults);
+  }
+}
+
 let messageToEdit = null;
 
 client.on("ready", async () => {
-  const channel = client.channels.cache.get(CHANNEL_ID);
+  const onlineChannel = client.channels.cache.get(CHANNEL_ID_ONLINE);
 
-  if (!channel) { console.error('Channel not found'); return; }
+  if (!onlineChannel) { console.error('The online channel not found'); return; }
 
-  channel.messages.fetch().then((messages) => {
+  onlineChannel.messages.fetch().then((messages) => {
     messages.forEach((message) => {
       message.delete();
     });
@@ -78,11 +100,29 @@ client.on("ready", async () => {
       if (messageToEdit) {
         messageToEdit.edit({ embeds: embeds });
       } else {
-        channel.send({ embeds: embeds }).then(sentMessage => {
+        onlineChannel.send({ embeds: embeds }).then(sentMessage => {
           messageToEdit = sentMessage;
         });
       }
     });
+
+    const peaksChannel = client.channels.cache.get(CHANNEL_ID_PEAKS);
+
+    if (!peaksChannel) { console.error('The peaks channel not found'); return; }
+
+    const currentDateTime = new Date();
+    if (currentDateTime.getHours() === 23 && currentDateTime.getMinutes() === 59) {
+      fetchRecentFlights((recentFlights) => {
+        let embed = new EmbedBuilder()
+          .setTitle("📈 Today's peaks")
+          .setColor("#FFFFFF")
+          .addFields(
+            { name: "Total flights", value: recentFlights.toString(), inline: true },
+          )
+
+        peaksChannel.send({ embeds: [embed] });
+      });
+    }
   }, 60000); // 1 minute
 });
 
