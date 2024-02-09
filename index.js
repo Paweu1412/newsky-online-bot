@@ -43,7 +43,7 @@ const fetchRecentFlights = async (callback) => {
 
   if (response.ok) {
     const data = await response.json();
-    callback(data.totalResults);
+    callback(data.results);
   }
 }
 
@@ -113,11 +113,36 @@ client.on("ready", async () => {
     const currentDateTime = new Date();
     if (currentDateTime.getHours() === 23 && currentDateTime.getMinutes() === 59) {
       fetchRecentFlights((recentFlights) => {
+        let totalRating = 0;
+        let totalDuration = 0;
+        let totalDistance = 0;
+        let vatsimFlights = 0;
+        let totalPassangers = 0;
+    
+        recentFlights.forEach(flight => {
+            if (flight.close) {
+              totalRating += flight.rating || 0;
+              totalDuration += flight.durationAct || 0;
+              totalDistance += flight.result.totals.distance || 0;
+              totalPassangers += flight.payload.pax || 0;
+
+              if (flight.network?.name === 'vatsim') {
+                vatsimFlights++;
+              }
+            }
+        });
+
+        const averageRating = totalRating / recentFlights.length;
         let embed = new EmbedBuilder()
-          .setTitle("📈 Today's peaks")
+          .setTitle(`📈 ${recentFlights[0].airline?.shortname} Daily Summary`)
           .setColor("#FFFFFF")
           .addFields(
-            { name: "Total flights", value: recentFlights.toString(), inline: true },
+            { name: "Total flights", value: recentFlights.length.toString(), inline: true },
+            { name: "Total duration", value: `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}min`, inline: true },
+            { name: "Total passangers", value: totalPassangers.toString(), inline: true },
+            { name: "VATSIM flights", value: vatsimFlights.toString(), inline: true },
+            { name: "Total distance", value: `${totalDistance}nm`, inline: true },
+            { name: "Average rating", value: averageRating.toString(), inline: true },
           )
 
         peaksChannel.send({ embeds: [embed] });
