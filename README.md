@@ -9,3 +9,4 @@ An application written in node.js using the discord.js library to display curren
 
 ## Showcase
 <img src="https://i.imgur.com/Vh9GJ0I.png" alt="react" height="150"/>
+<img src="https://i.imgur.com/S5INJ6L.png" alt="react" height="130"/>
